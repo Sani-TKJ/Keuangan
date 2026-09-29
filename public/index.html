@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>Keuangan Saya</title>
+
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+  <main class="container">
+
+    <header>
+      <p class="label">KEUANGAN SAYA</p>
+      <h1>Dashboard Keuangan</h1>
+      <p class="subtitle">
+        Pantau pemasukan, pengeluaran, dan tabungan kamu.
+      </p>
+    </header>
+
+    <section class="balance-card">
+      <span>Uang Tersedia</span>
+
+      <h2 id="balance">
+        Rp0
+      </h2>
+
+      <p>
+        Total uang:
+        <strong id="totalMoney">Rp0</strong>
+      </p>
+    </section>
+
+    <section class="stats">
+
+      <div class="stat">
+        <span>📥 Pemasukan</span>
+        <strong id="income">Rp0</strong>
+      </div>
+
+      <div class="stat">
+        <span>📤 Pengeluaran</span>
+        <strong id="expense">Rp0</strong>
+      </div>
+
+      <div class="stat">
+        <span>🏦 Tabungan</span>
+        <strong id="saving">Rp0</strong>
+      </div>
+
+    </section>
+
+    <section class="transactions">
+
+      <div class="section-header">
+        <h2>Riwayat Transaksi</h2>
+
+        <button onclick="loadData()">
+          ↻ Refresh
+        </button>
+      </div>
+
+      <div id="transactionList">
+        <div class="loading">
+          Memuat transaksi...
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="/app.js"></script>
+
+</body>
+</html>
