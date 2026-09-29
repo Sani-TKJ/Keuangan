@@ -1,209 +1,168 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+const USER_ID = "6281343229317";
+
+function rupiah(value) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0
+  }).format(Number(value || 0));
 }
 
-body {
-  font-family: Arial, sans-serif;
-  background: #080b12;
-  color: #ffffff;
-  min-height: 100vh;
+function formatDate(date) {
+  return new Date(date).toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }
 
-.container {
-  width: min(100% - 32px, 900px);
-  margin: auto;
-  padding: 40px 0;
-}
+async function loadSummary() {
+  try {
 
-header {
-  margin-bottom: 25px;
-}
+    const response = await fetch(
+      `/api/summary?user_id=${encodeURIComponent(USER_ID)}`
+    );
 
-.label {
-  font-size: 12px;
-  letter-spacing: 2px;
-  opacity: 0.6;
-  margin-bottom: 8px;
-}
+    const result = await response.json();
 
-h1 {
-  font-size: 30px;
-  margin-bottom: 8px;
-}
-
-.subtitle {
-  color: #8d95a5;
-  font-size: 14px;
-}
-
-.balance-card {
-  background: #111722;
-  border: 1px solid #202838;
-  border-radius: 20px;
-  padding: 28px;
-  margin-bottom: 18px;
-}
-
-.balance-card span {
-  color: #8d95a5;
-  font-size: 14px;
-}
-
-.balance-card h2 {
-  font-size: 38px;
-  margin: 10px 0;
-}
-
-.balance-card p {
-  color: #8d95a5;
-  font-size: 14px;
-}
-
-.balance-card strong {
-  color: #ffffff;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-bottom: 25px;
-}
-
-.stat {
-  background: #111722;
-  border: 1px solid #202838;
-  border-radius: 16px;
-  padding: 20px;
-}
-
-.stat span {
-  display: block;
-  color: #8d95a5;
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-
-.stat strong {
-  font-size: 20px;
-}
-
-.transactions {
-  background: #111722;
-  border: 1px solid #202838;
-  border-radius: 20px;
-  padding: 22px;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.section-header h2 {
-  font-size: 20px;
-}
-
-button {
-  background: #ffffff;
-  color: #000000;
-  border: none;
-  padding: 9px 14px;
-  border-radius: 9px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.transaction {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 0;
-  border-bottom: 1px solid #202838;
-}
-
-.transaction:last-child {
-  border-bottom: none;
-}
-
-.transaction-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #1a202c;
-}
-
-.transaction-name {
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-.transaction-date {
-  font-size: 12px;
-  color: #737b8b;
-}
-
-.amount {
-  font-weight: bold;
-}
-
-.income {
-  color: #48d597;
-}
-
-.expense {
-  color: #ff6678;
-}
-
-.saving {
-  color: #5da9ff;
-}
-
-.loading {
-  text-align: center;
-  padding: 30px;
-  color: #737b8b;
-}
-
-.empty {
-  text-align: center;
-  padding: 30px;
-  color: #737b8b;
-}
-
-@media (max-width: 650px) {
-
-  .container {
-    padding: 25px 0;
-  }
-
-  h1 {
-    font-size: 25px;
-  }
-
-  .balance-card h2 {
-    font-size: 32px;
-  }
-
-  .stats {
-    grid-template-columns: 1fr;
-  }
-
-  .transaction {
-    gap: 10px;
-  }
-
+    if (!result.success) {
+      throw new Error(result.message);
     }
+
+    const data = result.data;
+
+    document.getElementById("balance").textContent =
+      rupiah(data.balance);
+
+    document.getElementById("income").textContent =
+      rupiah(data.income);
+
+    document.getElementById("expense").textContent =
+      rupiah(data.expense);
+
+    document.getElementById("saving").textContent =
+      rupiah(data.saving);
+
+    document.getElementById("totalMoney").textContent =
+      rupiah(data.total_money);
+
+  } catch (error) {
+
+    console.error("Summary error:", error);
+
+  }
+}
+
+async function loadTransactions() {
+
+  const container =
+    document.getElementById("transactionList");
+
+  try {
+
+    const response = await fetch(
+      `/api/history?user_id=${encodeURIComponent(USER_ID)}`
+    );
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message);
+    }
+
+    const transactions = result.data;
+
+    if (!transactions.length) {
+
+      container.innerHTML = `
+        <div class="empty">
+          Belum ada transaksi.
+        </div>
+      `;
+
+      return;
+    }
+
+    container.innerHTML = transactions
+      .map(transaction => {
+
+        let icon = "💰";
+        let sign = "+";
+        let className = "income";
+
+        if (transaction.type === "expense") {
+          icon = "🔴";
+          sign = "-";
+          className = "expense";
+        }
+
+        if (transaction.type === "saving") {
+          icon = "🏦";
+          sign = "-";
+          className = "saving";
+        }
+
+        return `
+          <div class="transaction">
+
+            <div class="transaction-info">
+
+              <div class="icon">
+                ${icon}
+              </div>
+
+              <div>
+                <div class="transaction-name">
+                  ${escapeHTML(transaction.description)}
+                </div>
+
+                <div class="transaction-date">
+                  ${formatDate(transaction.created_at)}
+                </div>
+              </div>
+
+            </div>
+
+            <div class="amount ${className}">
+              ${sign}${rupiah(transaction.amount)}
+            </div>
+
+          </div>
+        `;
+
+      })
+      .join("");
+
+  } catch (error) {
+
+    console.error("History error:", error);
+
+    container.innerHTML = `
+      <div class="empty">
+        Gagal mengambil data transaksi.
+      </div>
+    `;
+  }
+}
+
+function escapeHTML(text) {
+
+  const div = document.createElement("div");
+
+  div.textContent = text ?? "";
+
+  return div.innerHTML;
+}
+
+async function loadData() {
+
+  await Promise.all([
+    loadSummary(),
+    loadTransactions()
+  ]);
+
+}
+
+loadData();
