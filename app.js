@@ -18,61 +18,100 @@ function formatDate(date) {
   });
 }
 
+// ==========================================
+// LOAD SUMMARY
+// ==========================================
+
 async function loadSummary() {
   try {
-
     const response = await fetch(
       `/api/summary?user_id=${encodeURIComponent(USER_ID)}`
     );
 
     const result = await response.json();
 
-    if (!result.success) {
-      throw new Error(result.message);
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.message ||
+        `HTTP ${response.status}`
+      );
     }
 
-    const data = result.data;
+    const data = result.data || {};
+
+    const balance =
+      Number(data.balance || 0);
+
+    const income =
+      Number(data.income || 0);
+
+    const expense =
+      Number(data.expense || 0);
+
+    const saving =
+      Number(data.saving || 0);
 
     document.getElementById("balance").textContent =
-      rupiah(data.balance);
+      rupiah(balance);
 
     document.getElementById("income").textContent =
-      rupiah(data.income);
+      rupiah(income);
 
     document.getElementById("expense").textContent =
-      rupiah(data.expense);
+      rupiah(expense);
 
     document.getElementById("saving").textContent =
-      rupiah(data.saving);
+      rupiah(saving);
+
+    // Total uang yang tercatat
+    const totalMoney =
+      income + saving;
 
     document.getElementById("totalMoney").textContent =
-      rupiah(data.total_money);
+      rupiah(totalMoney);
 
   } catch (error) {
-
-    console.error("Summary error:", error);
-
+    console.error(
+      "Summary error:",
+      error
+    );
   }
 }
+
+// ==========================================
+// LOAD TRANSACTIONS
+// ==========================================
 
 async function loadTransactions() {
 
   const container =
-    document.getElementById("transactionList");
+    document.getElementById(
+      "transactionList"
+    );
 
   try {
 
     const response = await fetch(
-      `/api/history?user_id=${encodeURIComponent(USER_ID)}`
+      `/api/story?user_id=${encodeURIComponent(USER_ID)}`
     );
 
-    const result = await response.json();
+    const result =
+      await response.json();
 
-    if (!result.success) {
-      throw new Error(result.message);
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.message ||
+        `HTTP ${response.status}`
+      );
     }
 
-    const transactions = result.data;
+    const transactions =
+      Array.isArray(result.data)
+        ? result.data
+        : [];
 
     if (!transactions.length) {
 
@@ -85,59 +124,77 @@ async function loadTransactions() {
       return;
     }
 
-    container.innerHTML = transactions
-      .map(transaction => {
+    container.innerHTML =
+      transactions
+        .map(transaction => {
 
-        let icon = "💰";
-        let sign = "+";
-        let className = "income";
+          let icon = "💰";
+          let sign = "+";
+          let className = "income";
 
-        if (transaction.type === "expense") {
-          icon = "🔴";
-          sign = "-";
-          className = "expense";
-        }
+          if (
+            transaction.type ===
+            "expense"
+          ) {
+            icon = "🔴";
+            sign = "-";
+            className = "expense";
+          }
 
-        if (transaction.type === "saving") {
-          icon = "🏦";
-          sign = "-";
-          className = "saving";
-        }
+          if (
+            transaction.type ===
+            "saving"
+          ) {
+            icon = "🏦";
+            sign = "-";
+            className = "saving";
+          }
 
-        return `
-          <div class="transaction">
+          return `
+            <div class="transaction">
 
-            <div class="transaction-info">
+              <div class="transaction-info">
 
-              <div class="icon">
-                ${icon}
+                <div class="icon">
+                  ${icon}
+                </div>
+
+                <div>
+
+                  <div class="transaction-name">
+                    ${escapeHTML(
+                      transaction.description
+                    )}
+                  </div>
+
+                  <div class="transaction-date">
+                    ${formatDate(
+                      transaction.created_at
+                    )}
+                  </div>
+
+                </div>
+
               </div>
 
-              <div>
-                <div class="transaction-name">
-                  ${escapeHTML(transaction.description)}
-                </div>
-
-                <div class="transaction-date">
-                  ${formatDate(transaction.created_at)}
-                </div>
+              <div class="amount ${className}">
+                ${sign}${rupiah(
+                  transaction.amount
+                )}
               </div>
 
             </div>
+          `;
 
-            <div class="amount ${className}">
-              ${sign}${rupiah(transaction.amount)}
-            </div>
-
-          </div>
-        `;
-
-      })
-      .join("");
+        })
+        .join("");
 
   } catch (error) {
 
-    console.error("History error:", error);
+    console.error(
+      "History error:",
+      error
+    );
 
     container.innerHTML = `
       <div class="empty">
@@ -147,14 +204,24 @@ async function loadTransactions() {
   }
 }
 
+// ==========================================
+// ESCAPE HTML
+// ==========================================
+
 function escapeHTML(text) {
 
-  const div = document.createElement("div");
+  const div =
+    document.createElement("div");
 
-  div.textContent = text ?? "";
+  div.textContent =
+    text ?? "";
 
   return div.innerHTML;
 }
+
+// ==========================================
+// LOAD ALL DATA
+// ==========================================
 
 async function loadData() {
 
@@ -164,5 +231,9 @@ async function loadData() {
   ]);
 
 }
+
+// ==========================================
+// START
+// ==========================================
 
 loadData();
