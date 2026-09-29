@@ -1,79 +1,271 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080d18">
 
-  <title>Keuangan Saya</title>
-
+  <title>Finansial — Keuangan Saya</title>
   <link rel="stylesheet" href="/style.css">
 </head>
-
 <body>
 
   <main class="container">
 
-    <header>
-      <p class="label">KEUANGAN SAYA</p>
-      <h1>Dashboard Keuangan</h1>
-      <p class="subtitle">
-        Pantau pemasukan, pengeluaran, dan tabungan kamu.
-      </p>
-    </header>
-
-    <section class="balance-card">
-      <span>Uang Tersedia</span>
-
-      <h2 id="balance">
-        Rp0
-      </h2>
-
-      <p>
-        Total uang:
-        <strong id="totalMoney">Rp0</strong>
-      </p>
-    </section>
-
-    <section class="stats">
-
-      <div class="stat">
-        <span>📥 Pemasukan</span>
-        <strong id="income">Rp0</strong>
-      </div>
-
-      <div class="stat">
-        <span>📤 Pengeluaran</span>
-        <strong id="expense">Rp0</strong>
-      </div>
-
-      <div class="stat">
-        <span>🏦 Tabungan</span>
-        <strong id="saving">Rp0</strong>
-      </div>
-
-    </section>
-
-    <section class="transactions">
-
-      <div class="section-header">
-        <h2>Riwayat Transaksi</h2>
-
-        <button onclick="loadData()">
-          ↻ Refresh
-        </button>
-      </div>
-
-      <div id="transactionList">
-        <div class="loading">
-          Memuat transaksi...
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">F</div>
+        <div>
+          <p class="label">KEUANGAN PRIBADI</p>
+          <h1 id="pageTitle">Dashboard</h1>
         </div>
       </div>
 
+      <button class="refresh-btn" onclick="loadData()" aria-label="Refresh data">
+        ↻
+      </button>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+
+      <div class="welcome">
+        <p class="muted">Selamat datang kembali 👋</p>
+        <h2>Atur uangmu,<br>capai tujuanmu.</h2>
+        <p class="muted small">
+          Pantau kondisi keuanganmu dalam satu tempat.
+        </p>
+      </div>
+
+      <section class="balance-card">
+        <div class="balance-top">
+          <span>Uang tersedia</span>
+          <span class="balance-badge">● Aktif</span>
+        </div>
+
+        <h2 id="balance">Rp0</h2>
+
+        <div class="balance-divider"></div>
+
+        <div class="balance-footer">
+          <span>Total uang tercatat</span>
+          <strong id="totalMoney">Rp0</strong>
+        </div>
+      </section>
+
+      <div class="section-heading">
+        <div>
+          <p class="label">RINGKASAN</p>
+          <h2>Keuanganmu</h2>
+        </div>
+      </div>
+
+      <div class="stats">
+        <article class="stat income-stat">
+          <div class="stat-top">
+            <span class="stat-icon">↙</span>
+            <span class="stat-caption">Pemasukan</span>
+          </div>
+          <strong id="income">Rp0</strong>
+        </article>
+
+        <article class="stat expense-stat">
+          <div class="stat-top">
+            <span class="stat-icon">↗</span>
+            <span class="stat-caption">Pengeluaran</span>
+          </div>
+          <strong id="expense">Rp0</strong>
+        </article>
+
+        <article class="stat saving-stat">
+          <div class="stat-top">
+            <span class="stat-icon">♧</span>
+            <span class="stat-caption">Tabungan</span>
+          </div>
+          <strong id="saving">Rp0</strong>
+        </article>
+      </div>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="label">AKTIVITAS</p>
+            <h2>Transaksi terbaru</h2>
+          </div>
+          <button class="text-btn" onclick="showPage('history')">
+            Lihat semua →
+          </button>
+        </div>
+
+        <div id="recentList">
+          <div class="loading">Memuat transaksi...</div>
+        </div>
+      </section>
     </section>
+
+    <!-- RIWAYAT -->
+    <section class="page" id="page-history">
+
+      <div class="page-intro">
+        <p class="label">CATATAN KEUANGAN</p>
+        <h2>Riwayat transaksi</h2>
+        <p class="muted">
+          Cari dan periksa transaksi berdasarkan bulan.
+        </p>
+      </div>
+
+      <section class="panel filter-panel">
+        <label for="historyMonth">Pilih bulan</label>
+        <div class="filter-row">
+          <select id="historyMonth" aria-label="Pilih bulan riwayat"></select>
+          <button class="reset-btn" onclick="resetHistoryFilter()">
+            Semua
+          </button>
+        </div>
+        <p class="muted small" id="historyCount">Memuat data...</p>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <h2>Daftar transaksi</h2>
+          <span class="live-dot">● Tersimpan</span>
+        </div>
+        <div id="transactionList">
+          <div class="loading">Memuat transaksi...</div>
+        </div>
+      </section>
+    </section>
+
+    <!-- RINGKASAN BULANAN -->
+    <section class="page" id="page-summary">
+
+      <div class="page-intro">
+        <p class="label">ANALISIS KEUANGAN</p>
+        <h2>Ringkasan bulanan</h2>
+        <p class="muted">
+          Lihat alur uang berdasarkan transaksi pada bulan pilihanmu.
+        </p>
+      </div>
+
+      <section class="panel filter-panel">
+        <label for="summaryMonth">Periode ringkasan</label>
+        <select id="summaryMonth" aria-label="Pilih bulan ringkasan"></select>
+      </section>
+
+      <div class="month-banner">
+        <span>PERIODE TERPILIH</span>
+        <h2 id="summaryPeriod">-</h2>
+        <p>Rekap berdasarkan riwayat transaksi yang tersedia.</p>
+      </div>
+
+      <div class="monthly-grid">
+        <article class="monthly-card">
+          <span class="monthly-icon green">＋</span>
+          <p>Pemasukan</p>
+          <strong id="monthIncome">Rp0</strong>
+        </article>
+
+        <article class="monthly-card">
+          <span class="monthly-icon red">−</span>
+          <p>Pengeluaran</p>
+          <strong id="monthExpense">Rp0</strong>
+        </article>
+
+        <article class="monthly-card">
+          <span class="monthly-icon blue">♧</span>
+          <p>Tabungan</p>
+          <strong id="monthSaving">Rp0</strong>
+        </article>
+
+        <article class="monthly-card">
+          <span class="monthly-icon purple">＝</span>
+          <p>Selisih transaksi</p>
+          <strong id="monthNet">Rp0</strong>
+        </article>
+      </div>
+
+      <section class="panel">
+        <div class="section-heading">
+          <h2>Komposisi bulan ini</h2>
+        </div>
+
+        <div class="bar-group">
+          <div class="bar-label">
+            <span>Pemasukan</span>
+            <strong id="incomePercent">0%</strong>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill green-fill" id="incomeBar"></div>
+          </div>
+        </div>
+
+        <div class="bar-group">
+          <div class="bar-label">
+            <span>Pengeluaran</span>
+            <strong id="expensePercent">0%</strong>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill red-fill" id="expenseBar"></div>
+          </div>
+        </div>
+
+        <div class="bar-group">
+          <div class="bar-label">
+            <span>Tabungan</span>
+            <strong id="savingPercent">0%</strong>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill blue-fill" id="savingBar"></div>
+          </div>
+        </div>
+
+        <p class="muted small">
+          Persentase dihitung dari total nominal transaksi pada periode tersebut.
+        </p>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <h2>Aktivitas bulan ini</h2>
+          <button class="text-btn" onclick="showPage('history')">
+            Buka riwayat →
+          </button>
+        </div>
+        <div id="monthlyTransactions">
+          <div class="loading">Memuat transaksi...</div>
+        </div>
+      </section>
+    </section>
+
+    <div id="appNotice" class="notice" role="status"></div>
 
   </main>
 
-  <script src="/app.js"></script>
+  <!-- NAVIGASI BAWAH -->
+  <nav class="bottom-nav" aria-label="Navigasi utama">
+    <button class="nav-item active"
+      data-page="dashboard"
+      onclick="showPage('dashboard')">
+      <span class="nav-icon">⌂</span>
+      <span>Beranda</span>
+    </button>
 
+    <button class="nav-item"
+      data-page="history"
+      onclick="showPage('history')">
+      <span class="nav-icon">▤</span>
+      <span>Riwayat</span>
+    </button>
+
+    <button class="nav-item"
+      data-page="summary"
+      onclick="showPage('summary')">
+      <span class="nav-icon">▥</span>
+      <span>Bulanan</span>
+    </button>
+  </nav>
+
+  <script src="/app.js"></script>
 </body>
 </html>
