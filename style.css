@@ -4,21 +4,32 @@
   padding: 0;
 }
 
+:root {
+  color-scheme: dark;
+  --page: #080b12;
+  --panel: #111722;
+  --border: #202838;
+  --muted: #8d95a5;
+  --text: #ffffff;
+  --green: #48d597;
+  --red: #ff6678;
+}
+
 body {
   font-family: Arial, sans-serif;
-  background: #080b12;
-  color: #ffffff;
+  background: var(--page);
+  color: var(--text);
   min-height: 100vh;
 }
 
 .container {
   width: min(100% - 32px, 900px);
   margin: auto;
-  padding: 40px 0;
+  padding: 34px 0 48px;
 }
 
-header {
-  margin-bottom: 25px;
+.page-header {
+  margin-bottom: 22px;
 }
 
 .label {
@@ -34,65 +45,120 @@ h1 {
 }
 
 .subtitle {
-  color: #8d95a5;
+  color: var(--muted);
   font-size: 14px;
+  line-height: 1.5;
+}
+
+.navbar {
+  display: flex;
+  gap: 8px;
+  padding: 7px;
+  margin-bottom: 22px;
+  background: #0e131d;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  position: sticky;
+  top: 10px;
+  z-index: 5;
+  backdrop-filter: blur(12px);
+}
+
+.nav-link {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-link span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.nav-link:hover {
+  color: var(--text);
+  background: #171e2b;
+}
+
+.nav-link.active {
+  color: var(--text);
+  background: #202838;
+  border-color: #303b4e;
+}
+
+.view.hidden {
+  display: none;
 }
 
 .balance-card {
-  background: #111722;
-  border: 1px solid #202838;
+  background: linear-gradient(135deg, #151d2b, #111722 70%);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 28px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .balance-card span {
-  color: #8d95a5;
+  color: var(--muted);
   font-size: 14px;
 }
 
 .balance-card h2 {
   font-size: 38px;
   margin: 10px 0;
+  overflow-wrap: anywhere;
 }
 
 .balance-card p {
-  color: #8d95a5;
+  color: var(--muted);
   font-size: 14px;
 }
 
 .balance-card strong {
-  color: #ffffff;
+  color: var(--text);
 }
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-  margin-bottom: 25px;
+  margin-bottom: 22px;
 }
 
 .stat {
-  background: #111722;
-  border: 1px solid #202838;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 20px;
+  min-width: 0;
 }
 
 .stat span {
   display: block;
-  color: #8d95a5;
+  color: var(--muted);
   font-size: 13px;
   margin-bottom: 10px;
 }
 
 .stat strong {
   font-size: 20px;
+  overflow-wrap: anywhere;
 }
 
 .transactions {
-  background: #111722;
-  border: 1px solid #202838;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 22px;
 }
@@ -101,29 +167,90 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 14px;
   margin-bottom: 18px;
 }
 
 .section-header h2 {
   font-size: 20px;
+  margin-bottom: 4px;
 }
 
 button {
+  font: inherit;
+}
+
+#refreshButton,
+.secondary-button {
+  flex-shrink: 0;
   background: #ffffff;
   color: #000000;
   border: none;
-  padding: 9px 14px;
+  padding: 10px 13px;
   border-radius: 9px;
   cursor: pointer;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#refreshButton:disabled,
+button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.secondary-button {
+  background: #202838;
+  color: var(--text);
+}
+
+.secondary-button:hover,
+#refreshButton:hover {
+  opacity: 0.85;
+}
+
+.history-tools {
+  margin-bottom: 16px;
+}
+
+.history-tools label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-row input {
+  flex: 1;
+  min-width: 0;
+  background: #0b1019;
+  border: 1px solid #303b4e;
+  border-radius: 9px;
+  color: var(--text);
+  padding: 10px 12px;
+  font: inherit;
+  color-scheme: dark;
+}
+
+.read-only-note {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 8px;
 }
 
 .transaction {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 15px 0;
-  border-bottom: 1px solid #202838;
+  border-bottom: 1px solid var(--border);
 }
 
 .transaction:last-child {
@@ -134,11 +261,13 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
-.icon {
+.transaction-icon {
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -146,9 +275,14 @@ button {
   background: #1a202c;
 }
 
+.transaction-details {
+  min-width: 0;
+}
+
 .transaction-name {
-  font-weight: bold;
+  font-weight: 700;
   margin-bottom: 4px;
+  overflow-wrap: anywhere;
 }
 
 .transaction-date {
@@ -157,53 +291,105 @@ button {
 }
 
 .amount {
-  font-weight: bold;
+  font-weight: 700;
+  white-space: nowrap;
+  font-size: 14px;
 }
 
 .income {
-  color: #48d597;
+  color: var(--green);
 }
 
 .expense {
-  color: #ff6678;
+  color: var(--red);
 }
 
-.saving {
-  color: #5da9ff;
-}
-
-.loading {
-  text-align: center;
-  padding: 30px;
-  color: #737b8b;
-}
-
+.loading,
 .empty {
   text-align: center;
-  padding: 30px;
+  padding: 30px 12px;
   color: #737b8b;
+  font-size: 14px;
 }
 
 @media (max-width: 650px) {
-
   .container {
-    padding: 25px 0;
+    width: min(100% - 24px, 900px);
+    padding: 24px 0 34px;
   }
 
   h1 {
     font-size: 25px;
   }
 
+  .navbar {
+    top: 6px;
+    margin-bottom: 16px;
+  }
+
+  .nav-link {
+    padding: 11px 8px;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .balance-card {
+    padding: 23px;
+  }
+
   .balance-card h2 {
-    font-size: 32px;
+    font-size: 30px;
   }
 
   .stats {
-    grid-template-columns: 1fr;
-  }
-
-  .transaction {
     gap: 10px;
   }
 
+  .stat {
+    padding: 15px;
+  }
+
+  .stat strong {
+    font-size: 17px;
+  }
+
+  .transactions {
+    padding: 17px;
+  }
+
+  .section-header h2 {
+    font-size: 18px;
+  }
+
+  .transaction {
+    align-items: flex-start;
+  }
+
+  .transaction-info {
+    gap: 9px;
+  }
+
+  .transaction-icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  .amount {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .nav-link {
+    font-size: 11px;
+  }
+  .nav-link span {
+    display: none;
+  }
+  .transaction {
+    flex-direction: column;
+  }
+  .amount {
+    align-self: flex-end;
+  }
 }

@@ -9,38 +9,71 @@
 </head>
 <body>
   <main class="container">
-    <header>
+    <header class="page-header">
       <p class="label">KEUANGAN SAYA</p>
-      <h1>Dashboard Keuangan</h1>
-      <p class="subtitle">Pantau pemasukan dan pengeluaran kamu.</p>
+      <h1 id="pageTitle">Dashboard Keuangan</h1>
+      <p class="subtitle" id="pageSubtitle">Pantau pemasukan dan pengeluaran kamu.</p>
     </header>
 
-    <section class="balance-card">
-      <span>Saldo Tersedia</span>
-      <h2 id="balance">Rp0</h2>
-      <p>Total pemasukan: <strong id="income">Rp0</strong></p>
+    <nav class="navbar" aria-label="Navigasi utama">
+      <button type="button" class="nav-link active" data-view="dashboard" aria-current="page">
+        <span aria-hidden="true">⌂</span> Dashboard
+      </button>
+      <button type="button" class="nav-link" data-view="history">
+        <span aria-hidden="true">↻</span> Riwayat Transaksi
+      </button>
+    </nav>
+
+    <section id="dashboardView" class="view">
+      <section class="balance-card">
+        <span>Saldo Tersedia</span>
+        <h2 id="balance">Rp0</h2>
+        <p>Total pemasukan: <strong id="income">Rp0</strong></p>
+      </section>
+
+      <section class="stats">
+        <div class="stat">
+          <span>📥 Pemasukan</span>
+          <strong id="incomeStat">Rp0</strong>
+        </div>
+        <div class="stat">
+          <span>📤 Pengeluaran</span>
+          <strong id="expense">Rp0</strong>
+        </div>
+      </section>
+
+      <section class="transactions recent-transactions">
+        <div class="section-header">
+          <h2>Transaksi Terbaru</h2>
+          <button type="button" id="viewHistoryButton" class="secondary-button">Lihat semua <span aria-hidden="true">→</span></button>
+        </div>
+        <div id="recentTransactionList">
+          <div class="loading">Memuat transaksi...</div>
+        </div>
+      </section>
     </section>
 
-    <section class="stats">
-      <div class="stat">
-        <span>📥 Pemasukan</span>
-        <strong id="incomeStat">Rp0</strong>
-      </div>
-      <div class="stat">
-        <span>📤 Pengeluaran</span>
-        <strong id="expense">Rp0</strong>
-      </div>
-    </section>
-
-    <section class="transactions">
-      <div class="section-header">
-        <h2>Riwayat Transaksi</h2>
-        <button type="button" id="refreshButton">↻ Refresh</button>
-      </div>
-      <p class="subtitle">Website ini hanya untuk melihat data. Tambah, edit, dan hapus transaksi dilakukan lewat bot WhatsApp.</p>
-      <div id="transactionList">
-        <div class="loading">Memuat transaksi...</div>
-      </div>
+    <section id="historyView" class="view hidden">
+      <section class="transactions">
+        <div class="section-header history-header">
+          <div>
+            <h2>Riwayat Transaksi</h2>
+            <p class="subtitle">Lihat transaksi berdasarkan bulan.</p>
+          </div>
+          <button type="button" id="refreshButton">↻ Refresh</button>
+        </div>
+        <div class="history-tools">
+          <label for="monthFilter">Pilih bulan</label>
+          <div class="filter-row">
+            <input type="month" id="monthFilter" aria-label="Pilih bulan transaksi">
+            <button type="button" id="allHistoryButton" class="secondary-button">Semua</button>
+          </div>
+        </div>
+        <p class="read-only-note">Website ini hanya untuk melihat data. Tambah, edit, dan hapus transaksi dilakukan lewat bot WhatsApp.</p>
+        <div id="transactionList">
+          <div class="loading">Memuat transaksi...</div>
+        </div>
+      </section>
     </section>
   </main>
   <script src="/app.js"></script>
