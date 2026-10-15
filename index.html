@@ -2,15 +2,15 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0a0a0a">
-  <title>Keuangan Saya</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#080b12">
+  <title>Keuangan Sann</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <main class="container">
     <header class="page-header">
-      <p class="label">KEUANGAN SAYA</p>
+      <p class="label">KEUANGAN SANN</p>
       <h1 id="pageTitle">Dashboard Keuangan</h1>
       <p class="subtitle" id="pageSubtitle">Pantau pemasukan dan pengeluaran kamu.</p>
     </header>
@@ -20,11 +20,11 @@
         <span aria-hidden="true">⌂</span> Dashboard
       </button>
       <button type="button" class="nav-link" data-view="history">
-        <span aria-hidden="true">↻</span> Riwayat Transaksi
+        <span aria-hidden="true">◷</span> Riwayat Transaksi
       </button>
     </nav>
 
-    <section id="dashboardView" class="view">
+    <section id="dashboardView" class="view dashboard-view">
       <section class="balance-card">
         <span>Saldo Tersedia</span>
         <h2 id="balance">Rp0</h2>
@@ -45,7 +45,10 @@
       <section class="transactions recent-transactions">
         <div class="section-header">
           <h2>Transaksi Terbaru</h2>
-          <button type="button" id="viewHistoryButton" class="secondary-button">Lihat semua <span aria-hidden="true">→</span></button>
+          <div class="header-actions">
+            <button type="button" id="dashboardRefreshButton" class="refresh-button" aria-label="Refresh dashboard">↻ <span>Refresh</span></button>
+            <button type="button" id="viewHistoryButton" class="secondary-button">Lihat semua <span aria-hidden="true">→</span></button>
+          </div>
         </div>
         <div id="recentTransactionList">
           <div class="loading">Memuat transaksi...</div>
@@ -53,14 +56,14 @@
       </section>
     </section>
 
-    <section id="historyView" class="view hidden">
-      <section class="transactions">
+    <section id="historyView" class="view history-view hidden">
+      <section class="transactions history-panel">
         <div class="section-header history-header">
           <div>
             <h2>Riwayat Transaksi</h2>
             <p class="subtitle">Lihat transaksi berdasarkan bulan.</p>
           </div>
-          <button type="button" id="refreshButton">↻ Refresh</button>
+          <button type="button" id="refreshButton" class="refresh-button">↻ <span>Refresh</span></button>
         </div>
         <div class="history-tools">
           <label for="monthFilter">Pilih bulan</label>
@@ -69,11 +72,16 @@
             <button type="button" id="allHistoryButton" class="secondary-button">Semua</button>
           </div>
         </div>
-        <p class="read-only-note">Website ini hanya untuk melihat data. Tambah, edit, dan hapus transaksi dilakukan lewat bot WhatsApp.</p>
-        <div id="transactionList">
+        <div id="transactionList" class="history-list">
           <div class="loading">Memuat transaksi...</div>
         </div>
+        <div id="historyPagination" class="pagination" hidden>
+          <button type="button" id="previousPageButton" class="secondary-button">← Sebelumnya</button>
+          <span id="pageIndicator">Halaman 1</span>
+          <button type="button" id="nextPageButton" class="secondary-button">Berikutnya →</button>
+        </div>
       </section>
+      <p class="read-only-note">Tambah, edit, dan hapus transaksi hanya melalui bot WhatsApp.</p>
     </section>
   </main>
   <script src="/app.js"></script>

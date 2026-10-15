@@ -1,12 +1,13 @@
 const USER_ID = "6281343229317";
+const PAGE_SIZE = 4;
 let allTransactions = [];
 let currentMonth = "";
+let currentPage = 1;
+let activeView = "dashboard";
 
 function rupiah(value) {
   return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0
+    style: "currency", currency: "IDR", maximumFractionDigits: 0
   }).format(Number(value || 0));
 }
 
@@ -14,11 +15,7 @@ function formatDate(date) {
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return "Tanggal tidak tersedia";
   return parsed.toLocaleString("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
+    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
   });
 }
 
@@ -28,11 +25,15 @@ function escapeHTML(value) {
   return div.innerHTML;
 }
 
-async function loadSummary() {
-  const response = await fetch(`/api/summary?user_id=${encodeURIComponent(USER_ID)}`);
+async function getJSON(url) {
+  const response = await fetch(url, { cache: "no-store" });
   const result = await response.json();
   if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
+  return result;
+}
 
+async function loadSummary() {
+  const result = await getJSON(`/api/summary?user_id=${encodeURIComponent(USER_ID)}&_=${Date.now()}`);
   const data = result.data || {};
   document.getElementById("balance").textContent = rupiah(data.balance);
   document.getElementById("income").textContent = rupiah(data.income);
@@ -50,16 +51,15 @@ function transactionHTML(transaction) {
       <div class="transaction-info">
         <div class="transaction-icon" aria-hidden="true">${icon}</div>
         <div class="transaction-details">
-          <div class="transaction-name">${escapeHTML(transaction.description)}</div>
+          <div class="transaction-name" title="${escapeHTML(transaction.description)}">${escapeHTML(transaction.description)}</div>
           <div class="transaction-date">${formatDate(transaction.created_at)}</div>
         </div>
       </div>
       <div class="amount ${className}">${sign}${rupiah(transaction.amount)}</div>
-    </div>
-  `;
+    </div>`;
 }
 
-function renderTransactions(transactions, container, emptyText) {
+function renderList(transactions, container, emptyText) {
   if (!transactions.length) {
     container.innerHTML = `<div class="empty">${emptyText}</div>`;
     return;
@@ -67,24 +67,37 @@ function renderTransactions(transactions, container, emptyText) {
   container.innerHTML = transactions.map(transactionHTML).join("");
 }
 
-async function loadTransactions(month = "") {
+function renderHistoryPage() {
   const container = document.getElementById("transactionList");
-  container.innerHTML = '<div class="loading">Memuat transaksi...</div>';
-  const params = new URLSearchParams({ user_id: USER_ID });
+  const pagination = document.getElementById("historyPagination");
+  const totalPages = Math.max(1, Math.ceil(allTransactions.length / PAGE_SIZE));
+  currentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = allTransactions.slice(start, start + PAGE_SIZE);
+  renderList(pageItems, container, currentMonth ? "Belum ada transaksi pada bulan ini." : "Belum ada transaksi.");
+  pagination.hidden = allTransactions.length <= PAGE_SIZE;
+  document.getElementById("pageIndicator").textContent = `Halaman ${currentPage} dari ${totalPages}`;
+  document.getElementById("previousPageButton").disabled = currentPage <= 1;
+  document.getElementById("nextPageButton").disabled = currentPage >= totalPages;
+}
+
+async function loadTransactions(month = currentMonth) {
+  const historyContainer = document.getElementById("transactionList");
+  const recentContainer = document.getElementById("recentTransactionList");
+  historyContainer.innerHTML = '<div class="loading">Memuat transaksi...</div>';
+  recentContainer.innerHTML = '<div class="loading">Memuat transaksi...</div>';
+  const params = new URLSearchParams({ user_id: USER_ID, _: String(Date.now()) });
   if (month) params.set("month", month);
-
-  const response = await fetch(`/api/story?${params.toString()}`);
-  const result = await response.json();
-  if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
-
-  const transactions = Array.isArray(result.data) ? result.data : [];
-  currentMonth = month;
-  allTransactions = transactions;
-  renderTransactions(transactions, container, month ? "Belum ada transaksi pada bulan ini." : "Belum ada transaksi.");
-  renderTransactions(transactions.slice(0, 5), document.getElementById("recentTransactionList"), "Belum ada transaksi.");
+  const result = await getJSON(`/api/story?${params.toString()}`);
+  allTransactions = Array.isArray(result.data) ? result.data : [];
+  currentMonth = month || "";
+  currentPage = 1;
+  renderHistoryPage();
+  renderList(allTransactions.slice(0, 3), recentContainer, "Belum ada transaksi.");
 }
 
 function showView(viewName) {
+  activeView = viewName;
   const isHistory = viewName === "history";
   document.getElementById("dashboardView").classList.toggle("hidden", isHistory);
   document.getElementById("historyView").classList.toggle("hidden", !isHistory);
@@ -99,26 +112,37 @@ function showView(viewName) {
     if (active) button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
   });
-
   if (isHistory) loadTransactions(currentMonth).catch(showLoadError);
-  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function showLoadError(error) {
-  console.error("Dashboard error:", error);
-  document.getElementById("transactionList").innerHTML = '<div class="empty">Gagal memuat riwayat. Coba refresh lagi.</div>';
-  document.getElementById("recentTransactionList").innerHTML = '<div class="empty">Gagal memuat data. Coba refresh lagi.</div>';
+  console.error("Keuangan dashboard error:", error);
+  const message = '<div class="empty">Gagal memuat data. Tekan Refresh untuk mencoba lagi.</div>';
+  document.getElementById("transactionList").innerHTML = message;
+  document.getElementById("recentTransactionList").innerHTML = message;
 }
 
-async function refreshData() {
-  const refreshButton = document.getElementById("refreshButton");
-  refreshButton.disabled = true;
+async function refreshDashboard() {
+  const button = document.getElementById("dashboardRefreshButton");
+  button.disabled = true;
   try {
     await Promise.all([loadSummary(), loadTransactions(currentMonth)]);
   } catch (error) {
     showLoadError(error);
   } finally {
-    refreshButton.disabled = false;
+    button.disabled = false;
+  }
+}
+
+async function refreshHistory() {
+  const button = document.getElementById("refreshButton");
+  button.disabled = true;
+  try {
+    await loadTransactions(currentMonth);
+  } catch (error) {
+    showLoadError(error);
+  } finally {
+    button.disabled = false;
   }
 }
 
@@ -126,21 +150,26 @@ document.querySelectorAll(".nav-link").forEach(button => {
   button.addEventListener("click", () => showView(button.dataset.view));
 });
 document.getElementById("viewHistoryButton").addEventListener("click", () => showView("history"));
-document.getElementById("refreshButton").addEventListener("click", refreshData);
+document.getElementById("dashboardRefreshButton").addEventListener("click", refreshDashboard);
+document.getElementById("refreshButton").addEventListener("click", refreshHistory);
 document.getElementById("monthFilter").addEventListener("change", async event => {
-  try {
-    await loadTransactions(event.target.value);
-  } catch (error) {
-    showLoadError(error);
-  }
+  currentMonth = event.target.value || "";
+  currentPage = 1;
+  try { await loadTransactions(currentMonth); }
+  catch (error) { showLoadError(error); }
 });
 document.getElementById("allHistoryButton").addEventListener("click", async () => {
   document.getElementById("monthFilter").value = "";
-  try {
-    await loadTransactions("");
-  } catch (error) {
-    showLoadError(error);
-  }
+  currentMonth = "";
+  currentPage = 1;
+  try { await loadTransactions(""); }
+  catch (error) { showLoadError(error); }
+});
+document.getElementById("previousPageButton").addEventListener("click", () => {
+  if (currentPage > 1) { currentPage--; renderHistoryPage(); }
+});
+document.getElementById("nextPageButton").addEventListener("click", () => {
+  if (currentPage < Math.ceil(allTransactions.length / PAGE_SIZE)) { currentPage++; renderHistoryPage(); }
 });
 
 Promise.all([loadSummary(), loadTransactions("")]).catch(showLoadError);
