@@ -1,480 +1,146 @@
-
+// Ganti dengan ID WhatsApp yang dipakai oleh akun pemilik dashboard.
+// Catatan: ID ini bukan sistem login. Jangan gunakan dashboard publik untuk data sensitif tanpa autentikasi.
 const USER_ID = "6281343229317";
-
-// Cache frontend agar tidak perlu meminta API
-// setiap kali berpindah halaman.
-let allTransactions = [];
-let dataLoaded = false;
-let isLoading = false;
+const $ = (id) => document.getElementById(id);
+let transactions = [];
 
 function rupiah(value) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0
-  }).format(Number(value || 0));
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(value || 0));
 }
-
-function formatDate(date) {
-  const parsed = new Date(date);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return "-";
+function formatDate(value) {
+  if (!value) return "Tanggal tidak tersedia";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Tanggal tidak tersedia";
+  return new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
+}
+function currentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+}
+function setStatus(message, isError = false) {
+  const el = $("status");
+  el.textContent = message;
+  el.style.color = isError ? "#edaaaa" : "#bdbdbd";
+}
+async function request(url, options = {}) {
+  const response = await fetch(url, { ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.success) throw new Error(result.message || `Permintaan gagal (${response.status})`);
+  return result;
+}
+function selectedMonth() { return $("monthPicker").value || currentMonth(); }
+async function loadData() {
+  $("refreshButton").disabled = true;
+  setStatus("Memuat data…");
+  const month = selectedMonth();
+  try {
+    const [summaryResult, historyResult] = await Promise.all([
+      request(`/api/summary?user_id=${encodeURIComponent(USER_ID)}&month=${encodeURIComponent(month)}`),
+      request(`/api/story?user_id=${encodeURIComponent(USER_ID)}&month=${encodeURIComponent(month)}`)
+    ]);
+    const data = summaryResult.data || {};
+    const monthly = data.monthly || {};
+    $("balance").textContent = rupiah(data.balance);
+    $("totalIncome").textContent = rupiah(data.income);
+    $("monthIncome").textContent = rupiah(monthly.income);
+    $("monthExpense").textContent = rupiah(monthly.expense);
+    $("monthNet").textContent = rupiah(monthly.net);
+    $("monthNet").className = Number(monthly.net || 0) < 0 ? "negative" : "positive";
+    transactions = Array.isArray(historyResult.data) ? historyResult.data : [];
+    renderTransactions();
+    setStatus("");
+  } catch (error) {
+    console.error("Keuangan load error:", error);
+    setStatus(error.message || "Gagal memuat data.", true);
+    $("transactionList").innerHTML = '<p class="empty">Data tidak dapat dimuat. Coba muat ulang.</p>';
+  } finally {
+    $("refreshButton").disabled = false;
   }
-
-  return parsed.toLocaleString("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
 }
-
-function getMonthKey(date) {
-  const parsed = new Date(date);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return "";
-  }
-
-  return `${parsed.getFullYear()}-${String(
-    parsed.getMonth() + 1
-  ).padStart(2, "0")}`;
-}
-
-function getMonthLabel(key) {
-  if (!key || !/^\d{4}-\d{2}$/.test(key)) {
-    return "Semua bulan";
-  }
-
-  const [year, month] = key.split("-").map(Number);
-
-  return new Date(year, month - 1, 1)
-    .toLocaleDateString("id-ID", {
-      month: "long",
-      year: "numeric"
-    });
-}
-
-function escapeHTML(text) {
-  const div = document.createElement("div");
-  div.textContent = text ?? "";
-  return div.innerHTML;
-}
-
-// ==========================================
-// NAVIGASI
-// ==========================================
-
-const pageTitles = {
-  dashboard: "Dashboard",
-  history: "Riwayat",
-  summary: "Ringkasan bulanan"
-};
-
-function showPage(page) {
-  const target = document.getElementById(`page-${page}`);
-
-  if (!target) return;
-
-  document.querySelectorAll(".page").forEach(element => {
-    element.classList.toggle(
-      "active",
-      element.id === `page-${page}`
-    );
-  });
-
-  document.querySelectorAll(".nav-item").forEach(button => {
-    const active = button.dataset.page === page;
-
-    button.classList.toggle("active", active);
-
-    if (active) {
-      button.setAttribute("aria-current", "page");
-    } else {
-      button.removeAttribute("aria-current");
-    }
-  });
-
-  document.getElementById("pageTitle").textContent =
-    pageTitles[page] || "Keuangan";
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-// ==========================================
-// PILIHAN BULAN
-// ==========================================
-
-function initMonthFilters() {
-  const historySelect = document.getElementById("historyMonth");
-  const summarySelect = document.getElementById("summaryMonth");
-
-  const previousHistory = historySelect.value;
-  const previousSummary = summarySelect.value;
-
-  const keys = new Set();
-
-  // Bulan saat ini tetap tersedia walau belum ada transaksi.
-  keys.add(getMonthKey(new Date()));
-
-  allTransactions.forEach(transaction => {
-    const key = getMonthKey(transaction.created_at);
-
-    if (key) keys.add(key);
-  });
-
-  const sortedKeys = [...keys].sort().reverse();
-
-  // Opsi kosong berarti seluruh riwayat.
-  historySelect.innerHTML = `
-    <option value="">Semua bulan</option>
-    ${sortedKeys.map(key => `
-      <option value="${key}">${escapeHTML(getMonthLabel(key))}</option>
-    `).join("")}
-  `;
-
-  summarySelect.innerHTML = sortedKeys.map(key => `
-    <option value="${key}">${escapeHTML(getMonthLabel(key))}</option>
-  `).join("");
-
-  historySelect.value = keys.has(previousHistory)
-    ? previousHistory
-    : "";
-
-  summarySelect.value = keys.has(previousSummary)
-    ? previousSummary
-    : getMonthKey(new Date());
-
-  historySelect.onchange = renderHistory;
-  summarySelect.onchange = renderMonthlySummary;
-}
-
-function resetHistoryFilter() {
-  document.getElementById("historyMonth").value = "";
-  renderHistory();
-}
-
-// ==========================================
-// LOAD SUMMARY
-// Endpoint tetap: /api/summary
-// ==========================================
-
-async function loadSummary() {
-  const response = await fetch(
-    `/api/summary?user_id=${encodeURIComponent(USER_ID)}`
-  );
-
-  const result = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || `HTTP ${response.status}`);
-  }
-
-  const data = result.data || {};
-
-  const balance = Number(data.balance || 0);
-  const income = Number(data.income || 0);
-  const expense = Number(data.expense || 0);
-  const saving = Number(data.saving || 0);
-
-  document.getElementById("balance").textContent =
-    rupiah(balance);
-
-  document.getElementById("income").textContent =
-    rupiah(income);
-
-  document.getElementById("expense").textContent =
-    rupiah(expense);
-
-  document.getElementById("saving").textContent =
-    rupiah(saving);
-
-  // Rumus total uang dipertahankan seperti kode awal.
-  document.getElementById("totalMoney").textContent =
-    rupiah(income + saving);
-}
-
-// ==========================================
-// LOAD TRANSACTIONS
-// Endpoint tetap: /api/story
-// ==========================================
-
-async function loadTransactions() {
-  const response = await fetch(
-    `/api/story?user_id=${encodeURIComponent(USER_ID)}`
-  );
-
-  const result = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || `HTTP ${response.status}`);
-  }
-
-  allTransactions = Array.isArray(result.data)
-    ? result.data
-    : [];
-
-  // Urutkan terbaru dahulu untuk tampilan.
-  allTransactions.sort((a, b) => {
-    return new Date(b.created_at).getTime() -
-      new Date(a.created_at).getTime();
-  });
-
-  dataLoaded = true;
-}
-
-// ==========================================
-// KOMPONEN TRANSAKSI
-// ==========================================
-
-function transactionHTML(transaction) {
-  let icon = "💰";
-  let sign = "+";
-  let className = "income";
-  let label = "Pemasukan";
-
-  if (transaction.type === "expense") {
-    icon = "↗";
-    sign = "-";
-    className = "expense";
-    label = "Pengeluaran";
-  }
-
-  if (transaction.type === "saving") {
-    icon = "♧";
-    sign = "-";
-    className = "saving";
-    label = "Tabungan";
-  }
-
-  return `
-    <article class="transaction">
-      <div class="transaction-info">
-        <div class="transaction-icon ${className}">
-          ${icon}
-        </div>
-
-        <div class="transaction-details">
-          <div class="transaction-name">
-            ${escapeHTML(transaction.description || label)}
-          </div>
-
-          <div class="transaction-date">
-            ${escapeHTML(formatDate(transaction.created_at))}
-          </div>
-        </div>
-      </div>
-
-      <div class="transaction-right">
-        <div class="amount ${className}">
-          ${sign}${rupiah(transaction.amount)}
-        </div>
-        <div class="transaction-type">${label}</div>
-      </div>
-    </article>
-  `;
-}
-
-function renderList(containerId, transactions, emptyMessage) {
-  const container = document.getElementById(containerId);
-
+function renderTransactions() {
+  const container = $("transactionList");
   if (!transactions.length) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">▤</div>
-        <strong>Belum ada transaksi</strong>
-        <p>${escapeHTML(emptyMessage)}</p>
-      </div>
-    `;
-
+    container.innerHTML = '<p class="empty">Belum ada transaksi pada bulan ini.</p>';
     return;
   }
-
-  container.innerHTML = transactions
-    .map(transactionHTML)
-    .join("");
+  container.innerHTML = transactions.map((item) => {
+    const type = ["income", "expense", "saving"].includes(item.type) ? item.type : "income";
+    const typeLabel = { income: "Pemasukan", expense: "Pengeluaran", saving: "Tabungan" }[type];
+    const sign = type === "income" ? "+" : "−";
+    return `<article class="transaction">
+      <div class="transaction-main">
+        <div class="transaction-title">${escapeHTML(item.description || "Tanpa keterangan")}</div>
+        <div class="transaction-meta">${typeLabel}${item.category ? ` · ${escapeHTML(item.category)}` : ""} · ${escapeHTML(formatDate(item.created_at))} · ID ${escapeHTML(item.id)}</div>
+      </div>
+      <div class="transaction-right">
+        <div class="transaction-amount ${type}">${sign}${rupiah(item.amount)}</div>
+        <div class="row-actions"><button class="small-action" type="button" data-edit="${escapeHTML(item.id)}">Edit</button><button class="small-action delete" type="button" data-delete="${escapeHTML(item.id)}">Hapus</button></div>
+      </div>
+    </article>`;
+  }).join("");
 }
-
-// ==========================================
-// DASHBOARD: TRANSAKSI TERBARU
-// ==========================================
-
-function renderRecent() {
-  renderList(
-    "recentList",
-    allTransactions.slice(0, 5),
-    "Transaksi yang tercatat akan muncul di sini."
-  );
+function openEditor(id) {
+  const item = transactions.find((transaction) => String(transaction.id) === String(id));
+  if (!item) return setStatus("Transaksi tidak ditemukan. Muat ulang data.", true);
+  $("editId").value = item.id;
+  $("editType").value = item.type;
+  $("editAmount").value = Number(item.amount);
+  $("editDescription").value = item.description || "";
+  $("editCategory").value = item.category || "";
+  $("editDialog").showModal();
 }
-
-// ==========================================
-// RIWAYAT: FILTER PER BULAN
-// ==========================================
-
-function renderHistory() {
-  const selectedMonth =
-    document.getElementById("historyMonth").value;
-
-  const filtered = selectedMonth
-    ? allTransactions.filter(transaction =>
-        getMonthKey(transaction.created_at) === selectedMonth
-      )
-    : allTransactions;
-
-  document.getElementById("historyCount").textContent =
-    `${filtered.length} transaksi ditemukan`;
-
-  renderList(
-    "transactionList",
-    filtered,
-    selectedMonth
-      ? `Tidak ada transaksi pada ${getMonthLabel(selectedMonth)}.`
-      : "Transaksi yang tercatat akan muncul di sini."
-  );
-}
-
-// ==========================================
-// RINGKASAN BULANAN
-// ==========================================
-
-function renderMonthlySummary() {
-  const selectedMonth =
-    document.getElementById("summaryMonth").value;
-
-  const transactions = allTransactions.filter(transaction =>
-    getMonthKey(transaction.created_at) === selectedMonth
-  );
-
-  let income = 0;
-  let expense = 0;
-  let saving = 0;
-
-  transactions.forEach(transaction => {
-    const amount = Number(transaction.amount || 0);
-
-    if (!Number.isFinite(amount)) return;
-
-    if (transaction.type === "expense") {
-      expense += amount;
-    } else if (transaction.type === "saving") {
-      saving += amount;
-    } else if (transaction.type === "income") {
-      income += amount;
-    }
-  });
-
-  // Selisih transaksi dihitung dari pemasukan dikurangi
-  // pengeluaran dan setoran tabungan.
-  const net = income - expense - saving;
-
-  document.getElementById("summaryPeriod").textContent =
-    getMonthLabel(selectedMonth);
-
-  document.getElementById("monthIncome").textContent =
-    rupiah(income);
-
-  document.getElementById("monthExpense").textContent =
-    rupiah(expense);
-
-  document.getElementById("monthSaving").textContent =
-    rupiah(saving);
-
-  document.getElementById("monthNet").textContent =
-    rupiah(net);
-
-  const total = income + expense + saving;
-
-  function updateBar(name, amount) {
-    const percent = total > 0
-      ? (amount / total) * 100
-      : 0;
-
-    document.getElementById(`${name}Percent`).textContent =
-      `${Math.round(percent)}%`;
-
-    document.getElementById(`${name}Bar`).style.width =
-      `${percent}%`;
-  }
-
-  updateBar("income", income);
-  updateBar("expense", expense);
-  updateBar("saving", saving);
-
-  renderList(
-    "monthlyTransactions",
-    transactions,
-    `Belum ada transaksi pada ${getMonthLabel(selectedMonth)}.`
-  );
-}
-
-// ==========================================
-// LOAD ALL DATA
-// ==========================================
-
-async function loadData() {
-  if (isLoading) return;
-
-  isLoading = true;
-
-  const notice = document.getElementById("appNotice");
-  notice.textContent = "";
-  notice.classList.remove("visible");
-
+async function deleteTransaction(id) {
+  const item = transactions.find((transaction) => String(transaction.id) === String(id));
+  if (!item) return;
+  if (!confirm(`Hapus transaksi “${item.description}” sebesar ${rupiah(item.amount)}? Tindakan ini tidak bisa dibatalkan.`)) return;
   try {
-    await Promise.all([
-      loadSummary(),
-      loadTransactions()
-    ]);
-
-    initMonthFilters();
-    renderRecent();
-    renderHistory();
-    renderMonthlySummary();
-
-    notice.textContent = "Data keuangan berhasil diperbarui.";
-    notice.classList.add("visible");
-
-    window.setTimeout(() => {
-      notice.classList.remove("visible");
-    }, 2500);
-
+    setStatus("Menghapus transaksi…");
+    await request("/api/transaction", { method: "DELETE", body: JSON.stringify({ user_id: USER_ID, id }) });
+    setStatus("Transaksi berhasil dihapus.");
+    await loadData();
   } catch (error) {
-    console.error("Load data error:", error);
-
-    notice.textContent =
-      "Gagal memuat data. Periksa koneksi atau API kamu.";
-
-    notice.classList.add("visible");
-
-    if (!dataLoaded) {
-      renderList(
-        "recentList",
-        [],
-        "Data belum dapat dimuat."
-      );
-
-      renderList(
-        "transactionList",
-        [],
-        "Coba muat ulang halaman."
-      );
-
-      renderList(
-        "monthlyTransactions",
-        [],
-        "Coba muat ulang halaman."
-      );
-    }
-
-  } finally {
-    isLoading = false;
+    setStatus(error.message || "Gagal menghapus transaksi.", true);
   }
 }
-
-// ==========================================
-// START
-// ==========================================
-
+$("transactionList").addEventListener("click", (event) => {
+  const editButton = event.target.closest("[data-edit]");
+  const deleteButton = event.target.closest("[data-delete]");
+  if (editButton) openEditor(editButton.dataset.edit);
+  if (deleteButton) deleteTransaction(deleteButton.dataset.delete);
+});
+$("editForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = {
+    user_id: USER_ID,
+    id: $("editId").value,
+    type: $("editType").value,
+    amount: Number($("editAmount").value),
+    description: $("editDescription").value.trim(),
+    category: $("editCategory").value.trim() || null
+  };
+  if (!payload.description || !Number.isFinite(payload.amount) || payload.amount <= 0) {
+    setStatus("Isi keterangan dan nominal yang valid.", true);
+    return;
+  }
+  const submit = $("editForm").querySelector('[type="submit"]');
+  submit.disabled = true;
+  try {
+    await request("/api/transaction", { method: "PATCH", body: JSON.stringify(payload) });
+    $("editDialog").close();
+    setStatus("Transaksi berhasil diperbarui.");
+    await loadData();
+  } catch (error) {
+    setStatus(error.message || "Gagal mengubah transaksi.", true);
+  } finally {
+    submit.disabled = false;
+  }
+});
+$("closeDialog").addEventListener("click", () => $("editDialog").close());
+$("cancelEdit").addEventListener("click", () => $("editDialog").close());
+$("refreshButton").addEventListener("click", loadData);
+$("monthPicker").addEventListener("change", loadData);
+$("monthPicker").value = currentMonth();
 loadData();
