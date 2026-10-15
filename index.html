@@ -2,55 +2,47 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111111">
-  <title>Keuangan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>Keuangan Saya</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <main class="container">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">KEUANGAN PRIBADI</p>
-        <h1>SannLloyd</h1>
-      </div>
-      <button class="button button-quiet" id="refreshButton" type="button">Muat ulang</button>
+    <header>
+      <p class="label">KEUANGAN SAYA</p>
+      <h1>Dashboard Keuangan</h1>
+      <p class="subtitle">Pantau pemasukan dan pengeluaran kamu.</p>
     </header>
 
-    <section class="balance-panel" aria-labelledby="balanceLabel">
-      <p id="balanceLabel" class="muted">Saldo bersih sepanjang waktu</p>
-      <p id="balance" class="balance-value">Rp0</p>
-      <div class="balance-foot"><span>Total pemasukan</span><strong id="totalIncome">Rp0</strong></div>
+    <section class="balance-card">
+      <span>Saldo Tersedia</span>
+      <h2 id="balance">Rp0</h2>
+      <p>Total pemasukan: <strong id="income">Rp0</strong></p>
     </section>
 
-    <section class="summary-grid" aria-label="Ringkasan bulan terpilih">
-      <article class="summary-item"><span>Pemasukan bulan ini</span><strong id="monthIncome" class="positive">Rp0</strong></article>
-      <article class="summary-item"><span>Pengeluaran bulan ini</span><strong id="monthExpense" class="negative">Rp0</strong></article>
-      <article class="summary-item"><span>Selisih bulan ini</span><strong id="monthNet">Rp0</strong></article>
-    </section>
-
-    <section class="transactions-panel">
-      <div class="section-heading">
-        <div><h2>Transaksi</h2><p class="muted">Periksa dan kelola catatan keuanganmu.</p></div>
-        <label class="month-control"><span class="sr-only">Pilih bulan</span><input id="monthPicker" type="month"></label>
+    <section class="stats">
+      <div class="stat">
+        <span>📥 Pemasukan</span>
+        <strong id="incomeStat">Rp0</strong>
       </div>
-      <div id="status" class="status" role="status" aria-live="polite"></div>
-      <div id="transactionList" class="transaction-list"><p class="empty">Memuat transaksi…</p></div>
+      <div class="stat">
+        <span>📤 Pengeluaran</span>
+        <strong id="expense">Rp0</strong>
+      </div>
     </section>
-    <p class="footer-note">Data disinkronkan dari catatan keuanganmu.</p>
-  </main>
 
-  <dialog id="editDialog" class="edit-dialog">
-    <form id="editForm" method="dialog">
-      <div class="dialog-heading"><div><p class="eyebrow">UBAH CATATAN</p><h2>Edit transaksi</h2></div><button type="button" id="closeDialog" class="close-button" aria-label="Tutup">×</button></div>
-      <input type="hidden" id="editId">
-      <label>Jenis transaksi<select id="editType" required><option value="income">Pemasukan</option><option value="expense">Pengeluaran</option><option value="saving">Tabungan</option></select></label>
-      <label>Nominal (Rp)<input id="editAmount" type="number" min="1" step="1" required></label>
-      <label>Judul / keterangan<input id="editDescription" type="text" maxlength="180" required></label>
-      <label>Kategori <span class="muted">(opsional)</span><input id="editCategory" type="text" maxlength="80"></label>
-      <div class="dialog-actions"><button type="button" id="cancelEdit" class="button button-quiet">Batal</button><button type="submit" class="button button-primary">Simpan perubahan</button></div>
-    </form>
-  </dialog>
-  <script src="/app.js" defer></script>
+    <section class="transactions">
+      <div class="section-header">
+        <h2>Riwayat Transaksi</h2>
+        <button type="button" id="refreshButton">↻ Refresh</button>
+      </div>
+      <p class="subtitle">Website ini hanya untuk melihat data. Tambah, edit, dan hapus transaksi dilakukan lewat bot WhatsApp.</p>
+      <div id="transactionList">
+        <div class="loading">Memuat transaksi...</div>
+      </div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
 </body>
 </html>
