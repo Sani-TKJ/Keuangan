@@ -28,12 +28,18 @@ async function getJSON(url) {
 }
 async function loadSummary(month = "") {
   const params = new URLSearchParams({ user_id: USER_ID, _: String(Date.now()) });
-  if (month) params.set("month", month);
+  params.set("month", month || currentMonthValue);
   const result = await getJSON(`/api/summary?${params}`); const data = result.data || {};
   document.getElementById("balance").textContent = rupiah(data.balance);
   document.getElementById("income").textContent = rupiah(data.income);
   document.getElementById("incomeStat").textContent = rupiah(data.income);
   document.getElementById("expense").textContent = rupiah(data.expense);
+  if (result.monthly && result.monthly.month === currentMonthValue) {
+    document.getElementById("dashMonthIncome").textContent = rupiah(result.monthly.income);
+    document.getElementById("dashMonthExpense").textContent = rupiah(result.monthly.expense);
+    document.getElementById("dashMonthIncomeLabel").textContent = monthName(currentMonthValue);
+    document.getElementById("dashMonthExpenseLabel").textContent = monthName(currentMonthValue);
+  }
   if (month && result.monthly) {
     const m = result.monthly;
     document.getElementById("monthlyExpense").textContent = rupiah(m.expense);
@@ -63,7 +69,7 @@ async function loadTransactions(month = "") {
   const params = new URLSearchParams({ user_id: USER_ID, _: String(Date.now()) }); if (month) params.set("month", month);
   const result = await getJSON(`/api/story?${params}`); allTransactions = Array.isArray(result.data) ? result.data : [];
   currentMonth = month || ""; currentPage = 1; renderHistoryPage();
-  renderList(allTransactions.slice(0, 3), document.getElementById("recentTransactionList"), "Belum ada transaksi.");
+  renderList(allTransactions, document.getElementById("recentTransactionList"), "Belum ada transaksi.");
 }
 async function loadMonthly(month) {
   if (!month) return;
