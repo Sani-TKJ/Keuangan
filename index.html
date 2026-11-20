@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f5efdf">
-  <title>Keuangan Sann — Money Tracker</title>
+  <title>Keuangan Sann</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <main class="container">
     <header class="page-header">
-      <div class="brand-row"><p class="label">KEUANGAN SANN</p><span class="live-tag">● MONEY TRACKER</span></div>
-      <h1 id="pageTitle">Dashboard Keuangan<span class="title-mark">✳</span></h1>
-      <p class="subtitle" id="pageSubtitle">Pantau arus uangmu. Tetap sadar, tetap terkendali.</p>
+      <div class="brand-row"><p class="label"></p><span class="live-tag">● CATATAN PRIBADI</span></div>
+      <h1 id="pageTitle">Keuangan San<span class="title-mark">✳</span></h1>
+      <p class="subtitle" id="pageSubtitle"></p>
     </header>
 
     <nav class="navbar" aria-label="Navigasi utama">
@@ -23,23 +23,24 @@
 
     <section id="dashboardView" class="view dashboard-view">
       <section class="balance-card">
-        <div class="card-top"><span>SALDO TERSEDIA</span><span class="card-icon">↗</span></div>
+        <div class="card-top"><span>SISA UANG </span><span class="card-icon">↗</span></div>
         <h2 id="balance">Rp0</h2>
-        <div class="balance-foot"><span>Akumulasi pemasukan</span><strong id="income">Rp0</strong></div>
+        <div class="balance-foot"><span>Total pemasukan</span><strong id="income">Rp0</strong></div>
       </section>
       <section class="stats">
-        <div class="stat income-stat"><span>↗ TOTAL PEMASUKAN</span><strong id="incomeStat">Rp0</strong></div>
-        <div class="stat expense-stat"><span>↘ TOTAL PENGELUARAN</span><strong id="expense">Rp0</strong><small>Semua transaksi</small></div>
+        <div class="stat income-stat"><span>↗ TOTAL PEMASUKAN</span><strong id="incomeStat">Rp0</strong>
+        <small></small></div>
+        <div class="stat expense-stat"><span>↘ TOTAL PENGELUARAN</span><strong id="expense">Rp0</strong><small></small></div>
       </section>
       <section class="stats month-stats">
-        <div class="stat income-stat"><span>↗ PEMASUKAN BULAN INI</span><strong id="dashMonthIncome">Rp0</strong><small id="dashMonthIncomeLabel">Bulan berjalan</small></div>
-        <div class="stat expense-stat"><span>↘ PENGELUARAN BULAN INI</span><strong id="dashMonthExpense">Rp0</strong><small id="dashMonthExpenseLabel">Bulan berjalan</small></div>
+        <div class="stat income-stat"><span>↗ PEMASUKAN BULAN INI</span><strong id="dashMonthIncome">Rp0</strong><small id="dashMonthIncomeLabel"></small></div>
+        <div class="stat expense-stat"><span>↘ PENGELUARAN BULAN INI</span><strong id="dashMonthExpense">Rp0</strong><small id="dashMonthExpenseLabel"></small></div>
       </section>
       <section class="transactions recent-transactions">
-        <div class="section-header"><div><p class="eyebrow">UPDATE TERAKHIR</p><h2>Transaksi Terbaru</h2></div><div class="header-actions"><button type="button" id="dashboardRefreshButton" class="refresh-button" aria-label="Refresh dashboard">↻</button><button type="button" id="viewHistoryButton" class="secondary-button">Semua →</button></div></div>
+        <div class="section-header"><div><p class="eyebrow">UPDATE TERBARU</p><h2>Transaksi Terbaru</h2></div><div class="header-actions"><button type="button" id="dashboardRefreshButton" class="refresh-button" aria-label="Refresh dashboard">↻</button><button type="button" id="viewHistoryButton" class="secondary-button">Semua →</button></div></div>
         <div id="recentTransactionList"><div class="loading">Memuat transaksi...</div></div>
       </section>
-      <p class="bot-note"><span class="wa-mark">WA</span><span><strong>Input lewat WhatsApp Bot</strong><br>Catat pemasukan dan pengeluaran langsung dari chat WhatsApp.</span></p>
+      <p class="bot-note"><span class="wa-mark">San</span><span><strong>Input lewat Bot Wa</strong><br>Catat pemasukan dan pengeluaran langsung dari chat WhatsApp.</span></p>
     </section>
 
     <section id="monthlyView" class="view monthly-view hidden">
@@ -54,7 +55,7 @@
         <div class="section-header month-transactions-heading"><div><p class="eyebrow">DETAIL PERIODE</p><h2>Transaksi Bulan Ini</h2></div></div>
         <div id="monthlyTransactionList" class="history-list"><div class="loading">Memuat transaksi...</div></div>
       </section>
-      <p class="bot-note"><span class="wa-mark">WA</span><span><strong>Data tersinkron dari WhatsApp Bot</strong><br>Tambah, edit, dan hapus transaksi tetap dilakukan melalui bot.</span></p>
+      <p class="bot-note"><span class="wa-mark">San</span><span><strong>Data tersinkron dari Bot wa</strong><br>Tambah, edit, dan hapus transaksi tetap dilakukan melalui bot.</span></p>
     </section>
 
     <section id="historyView" class="view history-view hidden">
@@ -64,7 +65,7 @@
         <div id="transactionList" class="history-list"><div class="loading">Memuat transaksi...</div></div>
         <div id="historyPagination" class="pagination" hidden><button type="button" id="previousPageButton" class="secondary-button">← Sebelumnya</button><span id="pageIndicator">Halaman 1</span><button type="button" id="nextPageButton" class="secondary-button">Berikutnya →</button></div>
       </section>
-      <p class="bot-note"><span class="wa-mark">WA</span><span><strong>Kelola transaksi melalui WhatsApp Bot</strong><br>Dashboard ini khusus untuk melihat data.</span></p>
+      <p class="bot-note"><span class="wa-mark">San</span><span><strong>Kelola transaksi melalui WhatsApp Bot</strong><br>Dashboard ini khusus untuk melihat data.</span></p>
     </section>
   </main>
   <script src="/app.js"></script>
