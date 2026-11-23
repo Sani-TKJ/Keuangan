@@ -50,7 +50,7 @@ async function loadSummary(month = "") {
 }
 function transactionHTML(transaction) {
   const isExpense = transaction.type === "expense";
-  return `<div class="transaction"><div class="transaction-info"><div class="transaction-icon ${isExpense ? "expense-icon" : "income-icon"}" aria-hidden="true">${isExpense ? "↘" : "↗"}</div><div class="transaction-details"><div class="transaction-name" title="${escapeHTML(transaction.description)}">${escapeHTML(transaction.description)}</div><div class="transaction-date">${escapeHTML(transaction.category || "Tanpa kategori")} · ${formatDate(transaction.created_at)}</div></div></div><div class="amount ${isExpense ? "expense" : "income"}">${isExpense ? "−" : "+"}${rupiah(transaction.amount)}</div></div>`;
+  return `<div class="transaction"><div class="transaction-info"><div class="transaction-icon ${isExpense ? "expense-icon" : "income-icon"}" aria-hidden="true">${isExpense ? "💸" : "🪙"}</div><div class="transaction-details"><div class="transaction-name" title="${escapeHTML(transaction.description)}">${escapeHTML(transaction.description)}</div><div class="transaction-date">${escapeHTML(transaction.category || "Tanpa kategori")} · ${formatDate(transaction.created_at)}</div></div></div><div class="amount ${isExpense ? "expense" : "income"}">${isExpense ? "−" : "+"}${rupiah(transaction.amount)}</div></div>`;
 }
 function renderList(transactions, container, emptyText) {
   container.innerHTML = transactions.length ? transactions.map(transactionHTML).join("") : `<div class="empty">${emptyText}</div>`;
@@ -83,7 +83,7 @@ function showView(viewName) {
   const views = { dashboard: "dashboardView", monthly: "monthlyView", history: "historyView" };
   Object.entries(views).forEach(([name, id]) => document.getElementById(id).classList.toggle("hidden", name !== viewName));
   const titles = { dashboard: ["Dashboard Keuangan", "Pantau arus uangmu. Tetap sadar, tetap terkendali."], monthly: ["Laporan Bulanan", "Lihat pengeluaran dan pemasukan berdasarkan periode."], history: ["Riwayat Transaksi", "Seluruh catatan keuangan dalam satu tempat."] };
-  document.getElementById("pageTitle").innerHTML = `${titles[viewName][0]}<span class="title-mark">✳</span>`;
+  document.getElementById("pageTitle").innerHTML = `${titles[viewName][0]}<span class="title-mark">♡</span>`;
   document.getElementById("pageSubtitle").textContent = titles[viewName][1];
   document.querySelectorAll(".nav-link").forEach(button => button.classList.toggle("active", button.dataset.view === viewName));
   if (viewName === "history") loadTransactions(currentMonth).catch(showLoadError);
